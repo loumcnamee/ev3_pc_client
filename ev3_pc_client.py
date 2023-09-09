@@ -16,6 +16,7 @@ import paho.mqtt.client as mqtt
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasAgg
+import occupancy_grid as grid
 
 
 class RobotData:
@@ -25,7 +26,7 @@ class RobotData:
     heading = 0.0
     x = 0.0
     y = 0.0
-    map_grid = np.zeros([512, 512])
+    map_grid = grid.Occupancy_Grid(6,6,0.01)
     # map_grid = np.random.random([1024, 1024])
 
     def __init__(self):
@@ -38,12 +39,13 @@ class RobotData:
 
     def ultra_sample(self, hdg, data):
         """add a new range sample from the ultrasonic sensor"""
-        self.ultra_range = data
+        self.ultra_range = data/100
         self.heading = hdg
-        x_occ = math.floor(self.x + self.ultra_range*math.cos(hdg*math.pi/180))
-        y_occ = math.floor(self.y + self.ultra_range*math.sin(hdg*math.pi/180))
-        self.map_grid[x_occ, y_occ] = (self.map_grid[x_occ, y_occ] + 1)/2
-        print("map grid update:", x_occ, y_occ, self.map_grid[x_occ, y_occ])
+        #x_occ = math.floor(self.x + self.ultra_range*math.cos(hdg*math.pi/180))
+        #y_occ = math.floor(self.y + self.ultra_range*math.sin(hdg*math.pi/180))
+        #self.map_grid[x_occ, y_occ] = (self.map_grid[x_occ, y_occ] + 1)/2
+        self.map_grid.sensor_reading(300, 300, hdg, 10, 0.1, self.ultra_range, 2.55, 0.01)
+        #print("map grid update:", x_occ, y_occ, self.map_grid[x_occ, y_occ])
 
     def get_ultra_range(self):
         "return the last report ultra sonic range in [cm]"
@@ -60,19 +62,19 @@ class RobotData:
 
     def get_map_grid(self):
         """return the robot map occupancy grid geerated from sensor data"""
-        return self.map_grid
+        return self.map_grid.get_map()
 
 
 def your_matplotlib_code(map_data):
     # Fixing random state for reproducibility
-    np.random.seed(19680801)
+    #np.random.seed(19680801)
 
     #map_img = np.zeros((1024, 1024))
     # make data
     #X, Y = np.meshgrid(np.linspace(-3, 3, 256), np.linspace(-3, 3, 256))
     Z = map_data
     fig, ax1 = plt.subplots()
-    ax1.imshow(Z, cmap='gray', interpolation='none')
+    ax1.imshow(Z.T, cmap='bone', interpolation='none', aspect='equal', origin='lower')
     #Pxx, freqs, bins, im = ax2.specgram(x, NFFT=NFFT, Fs=Fs, noverlap=900)
 
     return fig
@@ -104,7 +106,7 @@ def main():
     robot = RobotData()
 
     plt.style.use('_mpl-gallery-nogrid')
-    plt.rcParams["figure.figsize"]=(7,5)
+    plt.rcParams["figure.figsize"]=(8,8)
 
     theme_dict = {
         "BACKGROUND": "#111122",
@@ -166,7 +168,7 @@ def main():
     block_3 = [
         [sg.Text("Block 3", font="Any 20")],
         [sg.Input(), sg.Text("Some Text")],
-        [sg.Button("Go"), sg.Button("Exit")],
+        [sg.Button("Go"), sg.Button("Exit"), sg.Button("Plot")],
     ]
 
     block_2 = [
@@ -237,7 +239,7 @@ def main():
             ),
             sg.Column(
                 block_4,
-                size=(640, 640),
+                size=(1024, 1024),
                 pad=BPAD_RIGHT,
                 expand_x=True,
                 expand_y=True,
@@ -265,7 +267,8 @@ def main():
             decode_msg = msg.payload.decode("utf-8")
             u_msg = json.loads(decode_msg)
             robot.ultra_sample(u_msg[1],u_msg[2])
-            window.write_event_value("range_text", 0)
+            #window.write_event_value("range_text", 0)
+            #draw_figure(window['-IMAGE-'], your_matplotlib_code(robot.get_map_grid()))
 
     def on_hdg_message(theClient, userdata, msg):
         print(msg.topic, msg.payload.decode())
@@ -329,8 +332,11 @@ def main():
             window["hdg_text"].update(val)
         elif event == 'Go':
             draw_figure(window['-IMAGE-'], your_matplotlib_code(robot.get_map_grid()))
-            
+            window["hdg_text"].update(robot.get_heading())
+            window["range_text"].update(robot.get_ultra_range())
             window['-IMAGE-'].update(visible=True)
+        elif event == 'Plot':
+            robot.map_grid.plot_grid()
         elif event == "Edit Me":
             sg.execute_editor(__file__)
         elif event == "Version":
