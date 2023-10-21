@@ -7,3 +7,9 @@ This is a Python application which communicates with a Lego EV3 mobile via MQTT
 [![Powered by the Spatial Math Toolbox](https://github.com/petercorke/spatialmath-python/raw/master/.github/svg/sm_powered.min.svg)](https://github.com/petercorke/spatialmath-python)
 
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
+
+
+### Task List
+1. Separate data updates and commands into separate threads
+2. Add command infrastructiure
+3. Acclerometer experiment 
