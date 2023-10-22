@@ -90,7 +90,6 @@ class MainWindow(QMainWindow):
         self.text_speed.setMaximumWidth(120)
         self.text_speed.setText("-")
         self.status.addRow("Speed",self.text_speed)
-        
 
         self.num_button_columns = 4
         self.ControlsBox = QGroupBox("Controls")
@@ -146,12 +145,13 @@ class MainWindow(QMainWindow):
         self.controls.addWidget(self.btn_compass_cal,1,4)
         self.btn_compass_cal.clicked.connect(self.on_compass_cal_btn_clicked)
         
-        # self.pushButton_2 = QtWidgets.QPushButton(self.verticalLayoutWidget)
-        # self.pushButton_2.setObjectName("pushButton_2")
-        # self.verticalLayout.addWidget(self.pushButton_2)
-        # self.pushButton = QtWidgets.QPushButton(self.verticalLayoutWidget)
-        # self.pushButton.setObjectName("pushButton")
-        # self.verticalLayout.addWidget(self.pushButton)
+        self.btn_hdg_history = QtWidgets.QPushButton(self)
+        self.btn_hdg_history.setText("Hdg History")
+        self.btn_hdg_history.setMinimumHeight(self.default_btn_width)
+        self.btn_hdg_history.setMinimumHeight(self.default_btn_width)
+        self.btn_hdg_history.setMaximumWidth(self.default_btn_width)
+        self.controls.addWidget(self.btn_hdg_history,2,3)
+        self.btn_hdg_history.clicked.connect(self.on_hdg_history_btn_clicked)
         
         # self.btn_Scan.setObjectName("btn_Scan")
         # self.verticalLayout.addWidget(self.btn_Scan)
@@ -160,7 +160,8 @@ class MainWindow(QMainWindow):
         # self.verticalLayout.addWidget(self.btn_StopMotors)
 
         self.LogBox = QtWidgets.QGroupBox("Log")
-        self.LogBox.setMaximumWidth(int(3.4*self.default_btn_width))
+        self.LogBox.setMaximumWidth(int(self.num_button_columns*1.15*self.default_btn_width))
+        self.LogBox.setMinimumHeight(120)
         self.LogLayout = QtWidgets.QVBoxLayout()
         self.logEdit = QTextEdit()
         self.LogLayout.addWidget(self.logEdit)
@@ -182,7 +183,9 @@ class MainWindow(QMainWindow):
         self.graphicsView.setAlignment(Qt.AlignTop)
 
         self.headingPlot = pg.PlotWidget()
+        self.headingPlot.setBackground("k")
         self.headingPlot.setGeometry(QtCore.QRect(0, 0, 100, 600))
+        self.headingPlot.setMaximumHeight(120)
         self.headingPlot.showGrid(x=True, y=True)
        
         
@@ -219,8 +222,8 @@ class MainWindow(QMainWindow):
         self.timer.start()
 
         self.setObjectName("MainWindow")
-        self.resize(1200, 1000)
-        self.setMinimumSize(QtCore.QSize(640, 480))
+        self.resize(1024, 800)
+        self.setMinimumSize(QtCore.QSize(1024, 800))
         
      
     def log(self, logText):
@@ -274,6 +277,9 @@ class MainWindow(QMainWindow):
 
     def on_compass_cal_btn_clicked(self):
         self.robot.calibrate_compass()
+
+    def on_hdg_history_btn_clicked(self):
+        self.btn_hdg_history.setStyleSheet("background-color: green")
 
     def plot_grid(self):
         

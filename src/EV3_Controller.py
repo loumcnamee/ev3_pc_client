@@ -9,6 +9,7 @@
 # pip install paho-mqtt
 
 import json
+import logging
 #import numpy as np
 import paho.mqtt.client as mqtt
 import occupancy_grid as grid
@@ -27,13 +28,17 @@ class EV3Supervisor:
     # map_grid = np.random.random([1024, 1024])
 
     def __init__(self):
+        
+        logging.basicConfig(filename='EV3Control.log', encoding='utf-8', level=logging.DEBUG, \
+                            format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
         self.ultra_range = 0.0 # ultrasonic range sensor reading
         self.x = 256
         self.y = 256
         self.heading = 0.0
-        self.map_grid = grid.Occupancy_Grid(6,6,0.01)
+        self.map_grid = grid.Occupancy_Grid(8,8,0.01)
         self.connected = False
         self.heading_record = False
+        self.heading_history = []
 
         # create and set up a MQTT client to communicate with the EV3
         self.client = mqtt.Client()
@@ -55,6 +60,10 @@ class EV3Supervisor:
         """Called when the client connects to the MQTT server
         Set up topic subscriptions and callbacks"""
         self.connected = True
+
+        logging.info("Connected flags % s result code %s client1_id %s userdata %s", str(flags),\
+                      str(rc), str(client), str(userdata))
+        client.connected_flag=True
         print("Connected to MQTT Broker!")
         self.client.subscribe("ev3/sensor/ultra", 0)
         self.client.subscribe("ev3/sensor/accel", 0)
@@ -89,6 +98,7 @@ class EV3Supervisor:
     def heading_sample(self, data):
         """add a new heading sample from the compass sensor"""
         self.heading = data
+        self.heading_history.append(data)
 
     def get_heading(self):
         """return the last report ultra sonic range in [cm]"""
@@ -110,7 +120,7 @@ class EV3Supervisor:
 
     def on_ultra_message(self, the_client, user_data, msg):
         """Message handler for a ultrasonic message from the robot"""
-        print(msg.topic, msg.payload.decode("utf-8"))
+        logging.debug(msg.topic, msg.payload.decode("utf-8"), the_client, user_data)
 
         if msg.topic == "ev3/sensor/ultra":
             decode_msg = msg.payload.decode("utf-8")
